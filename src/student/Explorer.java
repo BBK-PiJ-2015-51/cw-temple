@@ -3,6 +3,7 @@ package student;
 import game.EscapeState;
 import game.ExplorationState;
 import game.NodeStatus;
+import java.util.Random;
 
 import java.util.Collection;
 
@@ -39,13 +40,26 @@ public class Explorer {
      * @param state the information available at the current state
      */
     public void explore(ExplorationState state) {
-        System.out.println("this is my current location: " + state.getCurrentLocation());
+        exploreRandom(state);
+    }
 
-        Collection<NodeStatus> neighbours = state.getNeighbours();
-        for (NodeStatus n : neighbours) {
-            System.out.println("ID is: " + n.getId());
+
+    public void exploreRandom(ExplorationState state) {
+        System.out.println("this is my start location: " + state.getCurrentLocation());
+        while (state.getDistanceToTarget() > 0) {
+            Collection<NodeStatus> neighbours = state.getNeighbours();
+            System.out.println("this is my current location: " + state.getCurrentLocation());
+            long[] temp = new long[neighbours.size()];
+            int i = 0;
+            for (NodeStatus n: neighbours) {
+                temp[i] = n.getId();
+                System.out.println(n.getId());
+                i++;
+            }
+            Random r = new Random();
+            int n = r.nextInt(temp.length);
+            state.moveTo(temp[n]);
         }
-    System.out.println("finished?");
     }
 
     /**
