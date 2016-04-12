@@ -53,15 +53,14 @@ public class Explorer {
     public void explore(ExplorationState state) {
 
         Map<Long,Collection<NodeStatus>> mazeMap = new HashMap<>();
-        Stack<Long> previousSquare = null
-        previousSquare.push(state.getCurrentLocation());
+
+        Stack<Long> previousSquare = new Stack<Long>();
         while (state.getDistanceToTarget() > 0) {
             //create mazeMap
             Long centre = state.getCurrentLocation();
             Collection<NodeStatus> neighbours = state.getNeighbours();
             mazeMap.put(centre,neighbours);
-
-
+            
             ArrayList<Long> squaresNotBeenTo = new ArrayList();
 
             //create a list of neighbours not been to
@@ -76,7 +75,7 @@ public class Explorer {
                 int i = r.nextInt(squaresNotBeenTo.size());
                 long nextSquare = squaresNotBeenTo.get(i);
                 state.moveTo(nextSquare);
-                previousSquare.push(nextSquare);
+                previousSquare.push(centre);
             } else {
                 //if there are no immediate squares trace back through previous squares
                 state.moveTo(previousSquare.pop());
