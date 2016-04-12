@@ -3,11 +3,22 @@ package student;
 import game.EscapeState;
 import game.ExplorationState;
 import game.NodeStatus;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.Random;
+import java.util.ArrayList;
+import java.util.Stack;
 
 import java.util.Collection;
 
 public class Explorer {
+
+    private class explorerNode {
+
+        long[] neighbours = null;
+
+    }
+
 
     /**
      * Explore the cavern, trying to find the orb in as few steps as possible.
@@ -40,7 +51,43 @@ public class Explorer {
      * @param state the information available at the current state
      */
     public void explore(ExplorationState state) {
-        exploreRandom(state);
+
+        Map<Long,Collection<NodeStatus>> mazeMap = new HashMap<>();
+        Stack<Long> previousSquare = null
+        previousSquare.push(state.getCurrentLocation());
+        while (state.getDistanceToTarget() > 0) {
+            //create mazeMap
+            Long centre = state.getCurrentLocation();
+            Collection<NodeStatus> neighbours = state.getNeighbours();
+            mazeMap.put(centre,neighbours);
+
+
+            ArrayList<Long> squaresNotBeenTo = new ArrayList();
+
+            //create a list of neighbours not been to
+            for (NodeStatus n: neighbours) {
+                if (!mazeMap.containsKey(n.getId())) {
+                    squaresNotBeenTo.add(n.getId());
+                }
+            }
+            //choose a square to go through from those available
+            if (!squaresNotBeenTo.isEmpty()) {
+                Random r = new Random();
+                int i = r.nextInt(squaresNotBeenTo.size());
+                long nextSquare = squaresNotBeenTo.get(i);
+                state.moveTo(nextSquare);
+                previousSquare.push(nextSquare);
+            } else {
+                //if there are no immediate squares trace back through previous squares
+                state.moveTo(previousSquare.pop());
+            }
+
+
+
+
+        }
+
+
     }
 
 
