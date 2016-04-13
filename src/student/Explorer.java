@@ -2,6 +2,7 @@ package student;
 
 import game.EscapeState;
 import game.ExplorationState;
+import game.Node;
 import game.NodeStatus;
 import java.util.Map;
 import java.util.HashMap;
@@ -162,6 +163,27 @@ public class Explorer {
      * @param state the information available at the current state
      */
     public void escape(EscapeState state) {
-        //TODO: Escape from the cavern before time runs out
+
+        //get current location
+        //calculate distance to exit using tile coordinates
+        //apply explore move and create a stack which contains an "exit stack" i.e. the
+        //shortest time back to exit
+        //if count of exit stack e.g. 10 and time remaining is 11 then "exit"
+        //in the meantime, use blank square and random move rule (later version can try to target large sums?)
+        // this should cover most of the space and then get back to exit in time
+
+        Collection<Node> v = state.getVertices();
+        System.out.println("current row" + state.getCurrentNode().getTile().getRow());
+        System.out.println("exit node" + state.getExit().getTile().getRow());
+        System.out.println("time remaining" + state.getTimeRemaining());
+        for (Node n: v) {
+            System.out.println("Id" + n.getId());
+            System.out.println("Row" + n.getTile().getRow());
+            System.out.println("Column" + n.getTile().getColumn());
+        }
     }
+
+
+
+
 }
