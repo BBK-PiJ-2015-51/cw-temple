@@ -172,40 +172,54 @@ public class Explorer {
         int exitColumn = exitTile.getColumn();
 
 
-        //start loop here
+        long exitPathDistance = calculateDistance(state.getCurrentNode(),exitNode);
+        Node exitPathNode = state.getCurrentNode();
+        Stack<Node> exitStack = new Stack<Node>();
+        ArrayList<Long> mazeMap = new ArrayList<Long>();
 
-        //get current location
-        Node currentNode = state.getCurrentNode();
+        //This calculates the number of steps to exit
+        while (calculateDistance(exitPathNode,exitNode) > 0) {
+            System.out.println("entering the loop:" + exitPathNode.getId());
+            //get current location
+            Node currentNode = exitPathNode;
+            mazeMap.add(currentNode.getId());
+            //calculate distance to exit using tile coordinates
+            long distanceToExit = calculateDistance(currentNode, exitNode);
+            //get neighbours
+            ArrayList<Node> neighbours = new ArrayList();
+            for (Node n : allNodes) {
+                long neighbourDistance = calculateDistance(currentNode, n);
+                if (neighbourDistance == 1) {
+                    neighbours.add(n);
+                }
+            }
+            //nodes visited
 
-        //calculate distance to exit using tile coordinates
-        long distanceToExit = calculateDistance(currentNode,exitNode);
-
-        //get neighbours
-        ArrayList<Node> neighbours = new ArrayList();
-        for (Node n: allNodes) {
-            long neighbourDistance = calculateDistance(currentNode,n);
-            if (neighbourDistance==1) {
-                neighbours.add(n);
+            //nodes not visited
+            ArrayList<Node> nodesNotVisited = new ArrayList();
+            //get neighbours not visited
+            for (Node n : neighbours) {
+                if (!mazeMap.contains(n.getId())) {
+                    nodesNotVisited.add(n);
+                }
+            }
+            //if blank square, choose shortest distance, if no blank square go back
+            Node visitNext = null;
+            if (!nodesNotVisited.isEmpty()) {
+                for (Node n : nodesNotVisited) {
+                    if (visitNext == null) {
+                        visitNext = n;
+                    } else if (calculateDistance(n, exitNode) < calculateDistance(visitNext, exitNode)) {
+                        visitNext = n;
+                    }
+                }
+                exitStack.push(currentNode);
+                exitPathNode = visitNext;
+            } else {
+                exitPathNode = exitStack.pop();
             }
         }
-
-        //nodes visited
-        Map<Long,Collection<Node>> mazeMap = new HashMap<>();
-
-        //nodes not visited
-        ArrayList<NodeStatus> nodesNotVisited = new ArrayList();
-
-
-        //get neighbours not been to
-        for (Node n: neighbours) {
-            if (!mazeMap.containsKey(n.getId())) {
-
-                nodesNotVisited.add(n);
-            }
-        }
-
-
-
+        System.out.println("Distance to Exit: " + exitStack.size());
     }
 
     public long calculateDistance(Node n1, Node n2) {
