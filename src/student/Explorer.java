@@ -60,16 +60,46 @@ public class Explorer {
             Long centre = state.getCurrentLocation();
             Collection<NodeStatus> neighbours = state.getNeighbours();
             mazeMap.put(centre,neighbours);
-            
+
             ArrayList<Long> squaresNotBeenTo = new ArrayList();
+            ArrayList<NodeStatus> nodesNotVisited = new ArrayList();
+            NodeStatus visitNext = null;
 
             //create a list of neighbours not been to
             for (NodeStatus n: neighbours) {
                 if (!mazeMap.containsKey(n.getId())) {
                     squaresNotBeenTo.add(n.getId());
+                    nodesNotVisited.add(n);
                 }
             }
-            //choose a square to go through from those available
+
+            //choose to go to the square that has the shortest distance first
+            System.out.println("centre" + centre);
+            if (!nodesNotVisited.isEmpty()) {
+                for (NodeStatus n: nodesNotVisited) {
+
+                    System.out.println("Id" + n.getId());
+                    System.out.println("distance" + n.getDistanceToTarget());
+
+                    if (visitNext == null ) {
+                        visitNext = n;
+                    } else if (n.getDistanceToTarget() < visitNext.getDistanceToTarget()) {
+                        visitNext = n;
+                    }
+                }
+
+                System.out.println("moving to" + visitNext.getId());
+
+
+                state.moveTo(visitNext.getId());
+                previousSquare.push(centre);
+            } else {
+                state.moveTo(previousSquare.pop());
+            }
+
+           /*
+
+            //choose a square RANDOM to go to from those not yet been to
             if (!squaresNotBeenTo.isEmpty()) {
                 Random r = new Random();
                 int i = r.nextInt(squaresNotBeenTo.size());
@@ -77,11 +107,11 @@ public class Explorer {
                 state.moveTo(nextSquare);
                 previousSquare.push(centre);
             } else {
-                //if there are no immediate squares trace back through previous squares
+                //if there are no immediate squares to move to trace back through previously visited squares
                 state.moveTo(previousSquare.pop());
             }
 
-
+*/
 
 
         }
