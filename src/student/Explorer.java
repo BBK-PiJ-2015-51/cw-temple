@@ -186,13 +186,13 @@ public class Explorer {
                 exitStack = tempStack;
             }
         }
-        if (routeOptions.size() == 1) {
+        if (routeOptions.size() >= 1) {
             findBestExitPath(routeOptions.get(0),state);
         }
-        if (routeOptions.size() <= 2) {
+        if (routeOptions.size() >= 2) {
             findBestExitPath(routeOptions.get(1),state);
         }
-        if (routeOptions.size() <= 3) {
+        if (routeOptions.size() >= 3) {
             findBestExitPath(routeOptions.get(2),state);
         }
         if (!tempStack.isEmpty()) {
