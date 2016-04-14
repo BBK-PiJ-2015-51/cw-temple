@@ -18,6 +18,8 @@ public class Explorer {
     private Stack<Node> escapeStack = new Stack();
     ArrayList<Long> mazeMap = new ArrayList<Long>();
     Stack<Node> exitStack = new Stack();
+    Stack<Node> tempStack = new Stack();
+
 
     /**
      * Explore the cavern, trying to find the orb in as few steps as possible.
@@ -134,21 +136,53 @@ public class Explorer {
 
         state.getTimeRemaining();
         Node currentNode = state.getCurrentNode();
-        findBestExitPath(currentNode) ;
+        findBestExitPath(currentNode,state) ;
         followExitPath(exitStack,state);
     }
 
-    public void findBestExitPath(Node n) {
-        Stack<Node> tempStack = new Stack();
-        getNextMoveOptions();
-        
+    boolean nextMoveOutOfTime;
 
+    public void findBestExitPath(Node n, EscapeState state) {
+
+        ArrayList<Node> routeOptions = getNextMoveOptions();
+        //if run out of time move back
+        if (nextMoveOutOfTime || routeOptions.isEmpty()) {
+            tempStack.pop();
+            return;
+        }
+        //if on exit tile replace exitStack if more money
+        if (n.getId() == state.getExit().getId()) {
+            if(getGoldFromStack(tempStack)> getGoldFromStack(exitStack)) {
+                exitStack = tempStack;
+            }
+        }
+        if (routeOptions.get(0) != null) {
+            tempStack.push(routeOptions.get(0));
+            findBestExitPath(routeOptions.get(0),state);
+        }
+        if (routeOptions.get(1) != null) {
+            tempStack.push(routeOptions.get(1));
+            findBestExitPath(routeOptions.get(1),state);
+        }
+        if (routeOptions.get(2) != null) {
+            tempStack.push(routeOptions.get(2));
+            findBestExitPath(routeOptions.get(2),state);
+        }
     }
+
+    public int getGoldFromStack(Stack<Node> s) {
+        int result = 0;
+        for(Node n: s) {
+            result = result + n.getTile().getGold();
+        }
+        return result;
+    }
+
 
     public void followExitPath(Stack<Node> exitStack, EscapeState state) {
         System.out.println("proceeding to exit");
-        for (int i = 1; i < exit.size(); i++) {
-            state.moveTo(exit.get(i));
+        for (int i = 1; i < exitStack.size(); i++) {
+            state.moveTo(exitStack.get(i));
             if (state.getCurrentNode().getTile().getGold() > 0) {
                 state.pickUpGold();
             }
