@@ -10,6 +10,8 @@ import java.util.Random;
 import java.util.ArrayList;
 import java.util.Stack;
 import game.Tile;
+import java.util.Set;
+import java.lang.Long.compareTo;
 
 import java.util.Collection;
 
@@ -19,7 +21,8 @@ public class Explorer {
     ArrayList<Long> mazeMap = new ArrayList<Long>();
     Stack<Node> exitStack = new Stack();
     Stack<Node> tempStack = new Stack();
-
+    int totalEscapeTimeAllowed = 0;
+    boolean nextMoveOutOfTime;
 
     /**
      * Explore the cavern, trying to find the orb in as few steps as possible.
@@ -133,18 +136,29 @@ public class Explorer {
      * @param state the information available at the current state
      */
     public void escape(EscapeState state) {
-
-        state.getTimeRemaining();
+        System.out.println("This is total amount left" + state.getTimeRemaining());
+        totalEscapeTimeAllowed = state.getTimeRemaining();
         Node currentNode = state.getCurrentNode();
         findBestExitPath(currentNode,state) ;
         followExitPath(exitStack,state);
     }
 
-    boolean nextMoveOutOfTime;
+    public ArrayList<Node> getNextMoveOptions(Node n) {
+        ArrayList<Node> result = new ArrayList();
+        Set<Node> neighbours = n.getNeighbours();
+        Long longN = n.getId();
+        for(Node m:neighbours) {
+            Long longM = m.getId();
+            int sameNode = longN.compareTo(longM);
+            if( sameNode != 0 ) {
+                result.add(m);
+            }
+        }
+        return result;
+    }
 
     public void findBestExitPath(Node n, EscapeState state) {
-
-        ArrayList<Node> routeOptions = getNextMoveOptions();
+        ArrayList<Node> routeOptions = getNextMoveOptions(n);
         //if run out of time move back
         if (nextMoveOutOfTime || routeOptions.isEmpty()) {
             tempStack.pop();
@@ -156,18 +170,22 @@ public class Explorer {
                 exitStack = tempStack;
             }
         }
-        if (routeOptions.get(0) != null) {
+        if (routeOptions.get(0) != null && enoughTimeToMove) {
             tempStack.push(routeOptions.get(0));
             findBestExitPath(routeOptions.get(0),state);
         }
-        if (routeOptions.get(1) != null) {
+        if (routeOptions.get(1) != null && enoughTimeToMove) {
             tempStack.push(routeOptions.get(1));
             findBestExitPath(routeOptions.get(1),state);
         }
-        if (routeOptions.get(2) != null) {
+        if (routeOptions.get(2) != null && enoughTimeToMove) {
             tempStack.push(routeOptions.get(2));
             findBestExitPath(routeOptions.get(2),state);
         }
+    }
+
+    public boolean enoughTimeToMove(EscapeState state) {
+        if(time)
     }
 
     public int getGoldFromStack(Stack<Node> s) {
@@ -177,7 +195,6 @@ public class Explorer {
         }
         return result;
     }
-
 
     public void followExitPath(Stack<Node> exitStack, EscapeState state) {
         System.out.println("proceeding to exit");
