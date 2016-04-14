@@ -161,11 +161,12 @@ public class Explorer {
         if (tempStack.isEmpty()) {
             return n;
         } else {
-            return tempStack.peek();
+            return tempStack.get(tempStack.size()-1);
         }
     }
 
     public void findBestExitPath(Node n, EscapeState state) {
+        System.out.println(n.getId());
         System.out.println("SizeOfStack" + tempStack.size());
         System.out.println("Size of exitStack" + exitStack.size());
         System.out.println("time of stack" + getWeightedTimeFromStack(tempStack));
