@@ -99,6 +99,14 @@ public class Explorer {
 
     }
 
+    public int getWightedTimeRemaining(Stack<Node> n) {
+        int result = 0;
+        for(int i = 0; i< n.size()-1; i++) {
+            result =  result + n.get(i).getEdge(n.get(i+1)).length;
+            System.out.println(n.get(i).getEdge(n.get(i+1)).length);
+        }
+        return result;
+    }
 
     /**
      * Escape from the cavern before the ceiling collapses, trying to collect as much
@@ -125,15 +133,52 @@ public class Explorer {
      */
     public void escape(EscapeState state) {
 
-        int stepsToExit = getExitPath(state.getCurrentNode(),state).size();
+        Stack<Node> exit = getExitPath(state.getCurrentNode(),state);
+        int stepsToExit = 0;
         int timeRemaining = state.getTimeRemaining();
 
-        while (timeRemaining>stepsToExit) {
+
+
+        System.out.println("exitsize:" + exit.size());
+        System.out.println("weighted:" + stepsToExit);
+        System.out.println(timeRemaining);
+
+        Stack<Node> goToExit = new Stack<Node>();
+
+
+
+
+        //travel around the map until just enough time to escape
+     /*  while (timeRemaining>stepsToExit) {
             state.moveTo(visitNextNode(state));
             state.getCurrentNode().getTile().takeGold();
             stepsToExit = getExitPath(state.getCurrentNode(),state).size();
             timeRemaining = state.getTimeRemaining();
         }
+*/
+
+
+
+
+        //reverse the stack
+        while(!exit.isEmpty()){
+            goToExit.push(exit.pop());
+        }
+
+        System.out.println("current node " + state.getCurrentNode().getId());
+        System.out.println("moving to "+ goToExit.peek().getId());
+        goToExit.pop();
+        System.out.println("moving to "+ goToExit.peek().getId());
+        //follow path back to escape
+        while(!goToExit.isEmpty()) {
+            System.out.println("current node1 " + state.getCurrentNode().getId());
+            state.moveTo(goToExit.pop());
+            state.getCurrentNode().getTile().takeGold();
+            System.out.println("current node3 " + state.getCurrentNode().getId());
+        }
+        state.moveTo(state.getExit());
+
+
     }
 
 
@@ -144,6 +189,7 @@ public class Explorer {
         Node currentNode = state.getCurrentNode();
         mazeMap.add(currentNode.getId());
         Node visitNextNode;
+        state.getCurrentNode().getTile().takeGold();
 
         //get all my neighbours
         ArrayList<Node> neighbours = new ArrayList();
@@ -193,8 +239,8 @@ public class Explorer {
         ArrayList<Long> mazeMap = new ArrayList<Long>();
 
         //This calculates the number of steps to exit
-        while (calculateDistance(exitPathNode,exitNode) > 0) {
-            System.out.println("entering the loop:" + exitPathNode.getId());
+        while (calculateDistance(exitPathNode,exitNode) != 0) {
+
             //get current location
             Node currentNode = exitPathNode;
             mazeMap.add(currentNode.getId());
