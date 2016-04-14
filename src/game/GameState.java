@@ -117,6 +117,7 @@ public class GameState implements ExplorationState, EscapeState {
         explore();
         if (!exploreSucceeded) return;
         escape();
+        System.out.println("I think I have finished?");
     }
 
     void explore() {

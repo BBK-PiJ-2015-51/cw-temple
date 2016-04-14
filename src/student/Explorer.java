@@ -103,7 +103,6 @@ public class Explorer {
         int result = 0;
         for(int i = 0; i< n.size()-1; i++) {
             result =  result + n.get(i).getEdge(n.get(i+1)).length;
-            System.out.println(n.get(i).getEdge(n.get(i+1)).length);
         }
         return result;
     }
@@ -133,54 +132,45 @@ public class Explorer {
      */
     public void escape(EscapeState state) {
 
-        Stack<Node> exit = getExitPath(state.getCurrentNode(),state);
-        int stepsToExit = 0;
+        Stack<Node> exit = getShortestPath(state.getCurrentNode(), state.getExit(),state);
+        int stepsToExit = getWightedTimeRemaining(exit);
         int timeRemaining = state.getTimeRemaining();
-
-
-
-        System.out.println("exitsize:" + exit.size());
-        System.out.println("weighted:" + stepsToExit);
-        System.out.println(timeRemaining);
-
-        Stack<Node> goToExit = new Stack<Node>();
-
-
-
+        boolean goToExit = false;
 
         //travel around the map until just enough time to escape
-     /*  while (timeRemaining>stepsToExit) {
-            state.moveTo(visitNextNode(state));
-            state.getCurrentNode().getTile().takeGold();
-            stepsToExit = getExitPath(state.getCurrentNode(),state).size();
-            timeRemaining = state.getTimeRemaining();
+       while (!goToExit) {
+           int weightOfNextMove = state.getCurrentNode().getEdge(visitNextNode(state)).length;
+           Stack<Node> shortestPathToExitOfNextMove = getShortestPath(visitNextNode(state),state.getExit(),state);
+           int stepsToExitOfNextMove = getWightedTimeRemaining(shortestPathToExitOfNextMove);
+
+           if (timeRemaining - weightOfNextMove > stepsToExitOfNextMove) {
+               state.moveTo(visitNextNode(state));
+               if (state.getCurrentNode().getTile().getGold() > 0) {
+                   state.pickUpGold();
+               }
+               timeRemaining = state.getTimeRemaining();
+                exit = getShortestPath(state.getCurrentNode(), state.getExit(),state);
+
+           } else {
+               goToExit = true;
+           }
+           System.out.println("time remaining " + timeRemaining);
+           System.out.println("weightofnextmove " + weightOfNextMove);
+           System.out.println("stepsToExit of next move " + stepsToExitOfNextMove);
         }
-*/
-
-
-
-
-        //reverse the stack
-        while(!exit.isEmpty()){
-            goToExit.push(exit.pop());
+        //then exit
+        System.out.println("proceeding to exit");
+        for (int i = 1; i < exit.size(); i++) {
+            state.moveTo(exit.get(i));
+            if (state.getCurrentNode().getTile().getGold() > 0) {
+                state.pickUpGold();
+            }
         }
-
-        System.out.println("current node " + state.getCurrentNode().getId());
-        System.out.println("moving to "+ goToExit.peek().getId());
-        goToExit.pop();
-        System.out.println("moving to "+ goToExit.peek().getId());
-        //follow path back to escape
-        while(!goToExit.isEmpty()) {
-            System.out.println("current node1 " + state.getCurrentNode().getId());
-            state.moveTo(goToExit.pop());
-            state.getCurrentNode().getTile().takeGold();
-            System.out.println("current node3 " + state.getCurrentNode().getId());
-        }
-        state.moveTo(state.getExit());
-
+        System.out.println("time left " + state.getTimeRemaining());
+        System.out.println("current id " + state.getCurrentNode().getId());
+        System.out.println("exitId " + state.getExit().getId());
 
     }
-
 
     public Node visitNextNode(EscapeState state) {
 
@@ -224,17 +214,17 @@ public class Explorer {
 
     }
 
-    public Stack<Node> getExitPath(Node c, EscapeState state) {
+    public Stack<Node> getShortestPath(Node c, Node e, EscapeState state) {
 
         Collection<Node> allNodes = state.getVertices();
-        Node exitNode = state.getExit();
+        Node exitNode = e;
         Tile exitTile = exitNode.getTile();
         int exitRow = exitTile.getRow();
         int exitColumn = exitTile.getColumn();
 
 
-        long exitPathDistance = calculateDistance(state.getCurrentNode(),exitNode);
-        Node exitPathNode = state.getCurrentNode();
+        long exitPathDistance = calculateDistance(c,exitNode);
+        Node exitPathNode = c;
         Stack<Node> exitStack = new Stack<Node>();
         ArrayList<Long> mazeMap = new ArrayList<Long>();
 
@@ -280,6 +270,7 @@ public class Explorer {
                 exitPathNode = exitStack.pop();
             }
         }
+    exitStack.push(e);
         return exitStack;
     }
 
