@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.Stack;
 import game.Tile;
 import java.util.Set;
-import java.lang.Long.compareTo;
+import java.lang.Long;
 
 import java.util.Collection;
 
@@ -143,13 +143,13 @@ public class Explorer {
         followExitPath(exitStack,state);
     }
 
-    public ArrayList<Node> getNextMoveOptions(Node n) {
+    public ArrayList<Node> getNextMoveOptions(Node curr, Node prev) {
         ArrayList<Node> result = new ArrayList();
-        Set<Node> neighbours = n.getNeighbours();
-        Long longN = n.getId();
+        Set<Node> neighbours = curr.getNeighbours();
+        Long longPrev = prev.getId();
         for(Node m:neighbours) {
-            Long longM = m.getId();
-            int sameNode = longN.compareTo(longM);
+            Long longCurr = m.getId();
+            int sameNode = longCurr.compareTo(longPrev);
             if( sameNode != 0 ) {
                 result.add(m);
             }
@@ -157,11 +157,26 @@ public class Explorer {
         return result;
     }
 
+    public Node getPreviousNode(Node n) {
+        if (tempStack.isEmpty()) {
+            return n;
+        } else {
+            return tempStack.peek();
+        }
+    }
+
     public void findBestExitPath(Node n, EscapeState state) {
-        ArrayList<Node> routeOptions = getNextMoveOptions(n);
+        System.out.println("SizeOfStack" + tempStack.size());
+        System.out.println("Size of exitStack" + exitStack.size());
+        System.out.println("time of stack" + getWeightedTimeFromStack(tempStack));
+        System.out.println("pushing on stack"+tempStack.push(n).getId());
+        ArrayList<Node> routeOptions = getNextMoveOptions(n, getPreviousNode(n));
+
+        System.out.println("no of route options" +routeOptions.size());
+
         //if run out of time move back
-        if (nextMoveOutOfTime || routeOptions.isEmpty()) {
-            tempStack.pop();
+        if (routeOptions.isEmpty() || !enoughTimeToMove(state,tempStack)) {
+            System.out.println("popping off stack" + tempStack.pop().getId());
             return;
         }
         //if on exit tile replace exitStack if more money
@@ -170,22 +185,42 @@ public class Explorer {
                 exitStack = tempStack;
             }
         }
-        if (routeOptions.get(0) != null && enoughTimeToMove) {
-            tempStack.push(routeOptions.get(0));
+        if (routeOptions.size() == 1) {
             findBestExitPath(routeOptions.get(0),state);
         }
-        if (routeOptions.get(1) != null && enoughTimeToMove) {
-            tempStack.push(routeOptions.get(1));
+        if (routeOptions.size() <= 2) {
             findBestExitPath(routeOptions.get(1),state);
         }
-        if (routeOptions.get(2) != null && enoughTimeToMove) {
-            tempStack.push(routeOptions.get(2));
+        if (routeOptions.size() <= 3) {
             findBestExitPath(routeOptions.get(2),state);
+        }
+        if (!tempStack.isEmpty()) {
+            tempStack.pop();
         }
     }
 
-    public boolean enoughTimeToMove(EscapeState state) {
-        if(time)
+    public boolean enoughTimeToMove(EscapeState state, Stack<Node> s) {
+        boolean result = false;
+        int currentStackTime = getWeightedTimeFromStack(s);
+      //  int nextMoveTime = getWeightedTimeFromNodes(src, dest);
+        if(totalEscapeTimeAllowed > (currentStackTime )) {
+            result = true;
+        }
+        return result;
+    }
+
+    public int getWeightedTimeFromStack(Stack<Node> n) {
+        int result = 0;
+        for(int i = 0; i< n.size()-1; i++) {
+            result =  result + n.get(i).getEdge(n.get(i+1)).length;
+        }
+        return result;
+    }
+
+    public int getWeightedTimeFromNodes(Node src, Node dest) {
+        int result = 0;
+        result =  src.getEdge(dest).length;
+        return result;
     }
 
     public int getGoldFromStack(Stack<Node> s) {
