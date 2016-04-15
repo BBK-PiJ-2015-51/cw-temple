@@ -191,8 +191,16 @@ public class Explorer {
         }
     }
 
-    public void findBestExitPath(Node n, EscapeState state) {
+    public Node getPreviousNode2(Node n) {
+        if (tempStack.isEmpty()) {
+            return n;
+        } else {
+            return tempStack.get(tempStack.size()-2);
+        }
+    }
 
+    public void findBestExitPath(Node n, EscapeState state) {
+System.out.println("this node" + n.getId());
         //calculate exit time
         exitStack = getShortestPath(n,state.getExit(),state);
         int exitStackTime = getWeightedTimeFromStack(exitStack);
@@ -216,26 +224,38 @@ public class Explorer {
 
         //if run out of time move back
         if (routeOptions.isEmpty() || OutOfTime) {
+            System.out.println("moving back");
+            if(routeOptions.isEmpty()) {
+                System.out.println("previou node" + getPreviousNode2(n).getId());
+                tempStack.push(getPreviousNode2(n));
+            }
             return;
         }
+
         routeOptions = getNextMoveOptions(n, getPreviousNode(n));
-        if (routeOptions.size() >= 1 && !OutOfTime){
+        if (!routeOptions.isEmpty()  && !OutOfTime){
+            Random r = new Random();
+            int rand = r.nextInt(routeOptions.size());
+            findBestExitPath(routeOptions.get(rand),state);
+        }
+
+        routeOptions = getNextMoveOptions(n, getPreviousNode(n));
+        if (!routeOptions.isEmpty() && !OutOfTime){
             Random r = new Random();
             int rand = r.nextInt(routeOptions.size());
             findBestExitPath(routeOptions.get(rand),state);
         }
         routeOptions = getNextMoveOptions(n, getPreviousNode(n));
-        if (routeOptions.size() >= 2 && !OutOfTime){
+        if (!routeOptions.isEmpty()  && !OutOfTime){
             Random r = new Random();
             int rand = r.nextInt(routeOptions.size());
             findBestExitPath(routeOptions.get(rand),state);
         }
-        routeOptions = getNextMoveOptions(n, getPreviousNode(n));
-        if (routeOptions.size() >= 3 && !OutOfTime){
-            Random r = new Random();
-            int rand = r.nextInt(routeOptions.size());
-            findBestExitPath(routeOptions.get(rand),state);
+        System.out.println("returning from method");
+        if(!OutOfTime) {
+            tempStack.push(getPreviousNode2(n));
         }
+        System.out.println(OutOfTime);
     }
 
     public boolean enoughTimeToMove(EscapeState state, Stack<Node> s) {
