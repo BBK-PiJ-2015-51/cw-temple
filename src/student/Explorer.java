@@ -203,10 +203,10 @@ public class Explorer {
             int i = r.nextInt(nodesNotVisited.size());
             visitNextNode = nodesNotVisited.get(i);
             //state.moveTo(nextNode);
-            escapeStack.push(currentNode); 
+            escapeStack.push(currentNode);
         } else {
             //if there are no immediate squares to move to trace back through previously visited squares
-            visitNextNode = escapeStack.pop();
+            visitNextNode = escapeStack.pop(); 
         }
 
         return visitNextNode;
