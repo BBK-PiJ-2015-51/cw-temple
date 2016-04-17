@@ -206,7 +206,7 @@ public class Explorer {
             escapeStack.push(currentNode);
         } else {
             //if there are no immediate squares to move to trace back through previously visited squares
-            visitNextNode = escapeStack.pop();
+            visitNextNode = escapeStack.pop(); 
         }
 
         return visitNextNode;
