@@ -18,9 +18,9 @@ import java.util.Collection;
 public class Explorer {
 
     private Stack<Node> escapeStack = new Stack();
-    ArrayList<Long> mazeMap = new ArrayList<Long>();
+   // ArrayList<Long> mazeMap = new ArrayList<Long>();
     ArrayList<Node> nodesVisited = new ArrayList<Node>();
-    ArrayList<NodeStatus> nodeStatusVisited = new ArrayList<NodeStatus>();
+    ArrayList<Long> nodeStatusVisited = new ArrayList<Long>();
     Stack<Node> exitStack = new Stack();
     Stack<Node> tempStack = new Stack();
     Stack<Node> wanderStack = new Stack();
@@ -61,44 +61,42 @@ public class Explorer {
      * @param state the information available at the current state
      */
     public void explore(ExplorationState state) {
-
-        Map<Long,Collection<NodeStatus>> mazeMap = new HashMap<>();
-        Stack<Long> previousSquare = new Stack<Long>();
-
+        Stack<Long> explorePath = new Stack<Long>();
         while (state.getDistanceToTarget() > 0) {
-            //create mazeMap
-            Long centre = state.getCurrentLocation();
-            Collection<NodeStatus> neighbours = state.getNeighbours();
-            mazeMap.put(centre,neighbours);
-
-            ArrayList<Long> squaresNotBeenTo = new ArrayList();
-            ArrayList<NodeStatus> nodesNotVisited = new ArrayList();
-            NodeStatus visitNext = null;
-
-            //create a list of neighbours not been to
-            for (NodeStatus n: neighbours) {
-                if (!mazeMap.containsKey(n.getId())) {
-                    squaresNotBeenTo.add(n.getId());
-                    nodesNotVisited.add(n);
-                }
-            }
-
-            //choose to go to the square that has the shortest distance first
-            if (!nodesNotVisited.isEmpty()) {
-                for (NodeStatus n: nodesNotVisited) {
-                    if (visitNext == null ) {
-                        visitNext = n;
-                    } else if (n.getDistanceToTarget() < visitNext.getDistanceToTarget()) {
-                        visitNext = n;
-                    }
-                }
-                state.moveTo(visitNext.getId());
-                previousSquare.push(centre);
-            } else {
-                state.moveTo(previousSquare.pop());
-            }
+            Long currentNodeStatus = state.getCurrentLocation();
+            nodeStatusVisited.add(currentNodeStatus);
+            visitNextNodeStatus(getNeighboursNotBeenTo(state),state,explorePath,currentNodeStatus);
         }
     }
+
+    public ArrayList<NodeStatus> getNeighboursNotBeenTo(ExplorationState state) {
+        Collection<NodeStatus> neighbours = state.getNeighbours();
+        ArrayList<NodeStatus> options = new ArrayList<NodeStatus>();
+        for (NodeStatus n: neighbours) {
+            if (!nodeStatusVisited.contains(n.getId())) {
+                options.add(n);
+            }
+        }
+        return options;
+    }
+
+    public void visitNextNodeStatus(ArrayList<NodeStatus> options, ExplorationState state,Stack<Long> explorePath,Long current) {
+        NodeStatus visitNext = null;
+        if (!options.isEmpty()) {
+            for (NodeStatus n: options) {
+                if (visitNext == null ) {
+                    visitNext = n;
+                } else if (n.getDistanceToTarget() < visitNext.getDistanceToTarget()) {
+                    visitNext = n;
+                }
+            }
+            state.moveTo(visitNext.getId());
+            explorePath.push(current);
+        } else {
+            state.moveTo(explorePath.pop());
+        }
+    }
+
 
     public int getWightedTimeRemaining(Stack<Node> n) {
         int result = 0;
@@ -327,48 +325,6 @@ public class Explorer {
                 state.pickUpGold();
             }
         }
-    }
-
-    public Node visitNextNode(EscapeState state) {
-
-        Collection<Node> allNodes = state.getVertices();
-
-        Node currentNode = state.getCurrentNode();
-        mazeMap.add(currentNode.getId());
-        Node visitNextNode;
-        state.getCurrentNode().getTile().takeGold();
-
-        //get all my neighbours
-        ArrayList<Node> neighbours = new ArrayList();
-        for (Node n : allNodes) {
-            long neighbourDistance = calculateDistance(currentNode, n);
-            if (neighbourDistance == 1) {
-                neighbours.add(n);
-            }
-        }
-        //then get neighbours not visited
-        ArrayList<Node> nodesNotVisited = new ArrayList();
-        //create a list of neighbours not been to
-        for (Node n: neighbours) {
-            if (!mazeMap.contains(n.getId())) {
-                nodesNotVisited.add(n);
-            }
-        }
-        //choose a square RANDOM to go to from those not yet been to
-        if (!nodesNotVisited.isEmpty()) {
-            Random r = new Random();
-            int i = r.nextInt(nodesNotVisited.size());
-            visitNextNode = nodesNotVisited.get(i);
-            //state.moveTo(nextNode);
-            escapeStack.push(currentNode);
-        } else {
-            //if there are no immediate squares to move to trace back through previously visited squares
-            visitNextNode = escapeStack.pop();
-        }
-
-        return visitNextNode;
-
-
     }
 
     public Stack<Node> getShortestExitPath(Node c, Node e, EscapeState state) {
