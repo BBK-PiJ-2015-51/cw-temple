@@ -24,7 +24,7 @@ public class TXTmain {
             }
         }
 
-        Optional<Long> seed = Utilities.parseSeedArgs(args);
+        Optional<Long> seed = Utilities.parseSeedArgs("494981935513531415");
 
         int totalScore = 0;
 

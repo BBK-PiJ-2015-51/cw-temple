@@ -19,13 +19,15 @@ public class Explorer {
 
     private Stack<Node> escapeStack = new Stack();
     ArrayList<Long> mazeMap = new ArrayList<Long>();
+    ArrayList<Node> nodesVisited = new ArrayList<Node>();
     Stack<Node> exitStack = new Stack();
     Stack<Node> tempStack = new Stack();
     Stack<Node> wanderStack = new Stack();
     Stack<Node> bestEscapePathStack = new Stack();
     Stack<Node> newEscapePathStack = new Stack();
+    Stack<Node> moveAroundStack = new Stack();
     int totalEscapeTimeAllowed = 0;
-    boolean OutOfTime = false;
+    boolean outOfTime = false;
 
 
     /**
@@ -143,15 +145,15 @@ public class Explorer {
         //find the path with the most gold
         findBestEscapePath(state);
         //move through this path
-        System.out.println("best escape path" + bestEscapePathStack.size());
         followExitPath(bestEscapePathStack,state);
     }
 
     public void findBestEscapePath(EscapeState state) {
         totalEscapeTimeAllowed = state.getTimeRemaining();
+        System.out.println(totalEscapeTimeAllowed);
         Node startNode = state.getCurrentNode();
         //find 100 paths that exit in time and take the path with the most gold
-        for (int i = 0; i < 1; i++) {
+        for (int i = 0; i < 100; i++) {
             findEscapePath(startNode,state);
             createNewEscapePathStack();
             checkAndReplaceBestEscapeStack();
@@ -173,26 +175,65 @@ public class Explorer {
     }
 
     public void createNewEscapePathStack() {
+        newEscapePathStack.removeAllElements();
         for (int j = 0; j < wanderStack.size(); j++) {
             newEscapePathStack.push(wanderStack.get(j));
         }
-        for (int j = 0; j < exitStack.size(); j++) {
+        for (int j = 1; j < exitStack.size(); j++) {
             newEscapePathStack.push(exitStack.get(j));
         }
     }
 
     public void clearAll() {
-        tempStack.removeAllElements();
         wanderStack.removeAllElements();
         exitStack.removeAllElements();
-        mazeMap.clear();
-        OutOfTime = false;
+        moveAroundStack.removeAllElements();
+        nodesVisited.clear();
+        outOfTime = false;
     }
 
-
     public void findEscapePath(Node n, EscapeState state) {
+        Node currentNode = n;
+        ArrayList<Node> moveOptions;
+        wanderStack.push(n);
+        moveAroundStack.push(n);
+        Stack<Node> tempExitStack = new Stack<Node>();
+        while(!outOfTime) {
+            Node previousNode;
+            if (moveAroundStack.size()>=2) {
+                previousNode = moveAroundStack.get(moveAroundStack.size()-2);
+            } else {
+                previousNode = currentNode;
+            }
+            moveOptions = getNextMoveOptions(currentNode, previousNode);
+            exitStack = tempExitStack;
+            if (moveOptions.isEmpty()) {
+                moveAroundStack.pop();
+                wanderStack.push(moveAroundStack.peek());
+                currentNode = moveAroundStack.peek();
+
+            } else {
+                Node nextMove = chooseNextMove(moveOptions);
+                moveAroundStack.push(nextMove);
+                wanderStack.push(nextMove);
+                nodesVisited.add(currentNode);
+                currentNode = nextMove;
+
+            }
+            tempExitStack = getShortestExitPath(currentNode, state.getExit(), state);
+            outOfTime = checkIfOutOfTime(wanderStack, tempExitStack);
+        }
+        //last move led to out of time so step back one
+        wanderStack.pop();
 
 
+    }
+
+    public Node chooseNextMove(ArrayList<Node> options) {
+        Random r = new Random();
+        int rand = r.nextInt(options.size());
+        Node result = options.get(0);
+        return result;
     }
 
     public void setExitStack(Node n, EscapeState state) {
@@ -215,11 +256,11 @@ public class Explorer {
         ArrayList<Node> result = new ArrayList();
         Set<Node> neighbours = curr.getNeighbours();
         Long longPrev = prev.getId();
-        for(Node m:neighbours) {
-            Long longCurr = m.getId();
+        for(Node n:neighbours) {
+            Long longCurr = n.getId();
             int sameNode = longCurr.compareTo(longPrev);
-            if( sameNode != 0 && !mazeMap.contains(m.getId())) {
-                result.add(m);
+            if( sameNode != 0 && !nodesVisited.contains(n.getId())) {
+                result.add(n);
             }
         }
         return result;
@@ -241,13 +282,13 @@ public class Explorer {
         }
     }
 
-    public boolean checkIfOutOfTime( Stack<Node> temp, Stack<Node> exit ) {
+    public boolean checkIfOutOfTime( Stack<Node> wander, Stack<Node> exit ) {
         boolean result = false;
-        int tempStackTime = getWeightedTimeFromStack(temp);
+        int wanderStackTime = getWeightedTimeFromStack(wander);
         int exitStackTime = getWeightedTimeFromStack(exit);
-        int tempToExitTime = getWeightedTimeFromNodes(tempStack.peek(), exitStack.get(0));
+        int wanderToExitTime = getWeightedTimeFromNodes(wander.peek(), exit.get(0));
       //  int nextMoveTime = getWeightedTimeFromNodes(src, dest);
-        if(totalEscapeTimeAllowed < (tempStackTime+ exitStackTime+tempToExitTime)) {
+        if(totalEscapeTimeAllowed < (wanderStackTime+ exitStackTime+wanderToExitTime)) {
             result = true;
         }
         return result;
@@ -283,8 +324,8 @@ public class Explorer {
         for(Node n: s) {
             if (!visited.contains(n.getId())) {
                 result = result + n.getTile().getGold();
+                visited.add(n.getId());
             }
-            visited.add(n.getId());
         }
         return result;
     }
