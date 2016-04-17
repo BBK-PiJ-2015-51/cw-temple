@@ -20,11 +20,11 @@ public class Explorer {
     private Stack<Node> escapeStack = new Stack();
     ArrayList<Long> mazeMap = new ArrayList<Long>();
     ArrayList<Node> nodesVisited = new ArrayList<Node>();
+    ArrayList<NodeStatus> nodeStatusVisited = new ArrayList<NodeStatus>();
     Stack<Node> exitStack = new Stack();
     Stack<Node> tempStack = new Stack();
     Stack<Node> wanderStack = new Stack();
     Stack<Node> bestEscapePathStack = new Stack();
-    Stack<Node> newEscapePathStack = new Stack();
     Stack<Node> moveAroundStack = new Stack();
     int totalEscapeTimeAllowed = 0;
     boolean outOfTime = false;
@@ -97,17 +97,7 @@ public class Explorer {
             } else {
                 state.moveTo(previousSquare.pop());
             }
-
-           /*
-
-
-
-*/
-
-
         }
-
-
     }
 
     public int getWightedTimeRemaining(Stack<Node> n) {
@@ -155,33 +145,35 @@ public class Explorer {
         //find 100 paths that exit in time and take the path with the most gold
         for (int i = 0; i < 100; i++) {
             findEscapePath(startNode,state);
-            createNewEscapePathStack();
             checkAndReplaceBestEscapeStack();
             clearAll();
         }
     }
 
     public void checkAndReplaceBestEscapeStack() {
+        Stack<Node> newEscapePathStack = createNewEscapePathStack();
         //choose the path with the most gold
         if (bestEscapePathStack.isEmpty()) {
             bestEscapePathStack = newEscapePathStack;
         } else {
             int bestEscapePathGold = getGoldFromStack(bestEscapePathStack);
             int newEscapePathGold = getGoldFromStack(newEscapePathStack);
-            if (bestEscapePathGold < newEscapePathGold) {
+
+            if (newEscapePathGold > bestEscapePathGold) {
                 bestEscapePathStack = newEscapePathStack;
             }
         }
     }
 
-    public void createNewEscapePathStack() {
-        newEscapePathStack.removeAllElements();
+    public Stack<Node> createNewEscapePathStack() {
+        Stack<Node> result = new Stack<Node>();
         for (int j = 0; j < wanderStack.size(); j++) {
-            newEscapePathStack.push(wanderStack.get(j));
+            result.push(wanderStack.get(j));
         }
         for (int j = 1; j < exitStack.size(); j++) {
-            newEscapePathStack.push(exitStack.get(j));
+            result.push(exitStack.get(j));
         }
+        return result;
     }
 
     public void clearAll() {
@@ -218,38 +210,36 @@ public class Explorer {
                 wanderStack.push(nextMove);
                 nodesVisited.add(currentNode);
                 currentNode = nextMove;
-
             }
-            tempExitStack = getShortestExitPath(currentNode, state.getExit(), state);
+            tempExitStack = getShortestExitPath(currentNode,state.getExit(),state);;
             outOfTime = checkIfOutOfTime(wanderStack, tempExitStack);
         }
         //last move led to out of time so step back one
         wanderStack.pop();
-
-
     }
 
     public Node chooseNextMove(ArrayList<Node> options) {
         Random r = new Random();
         int rand = r.nextInt(options.size());
-        Node result = options.get(0);
+        Node result = options.get(rand);
         return result;
     }
 
-    public void setExitStack(Node n, EscapeState state) {
+    public Stack<Node> setExitStack(Node n, EscapeState state) {
         totalEscapeTimeAllowed = state.getTimeRemaining();
         boolean exitPathWithinTime = false;
+        Stack<Node> result = new Stack<Node>();
         //always return an exit path that is within the time limit
         while(!exitPathWithinTime) {
-            exitStack = getShortestExitPath(n,state.getExit(),state);
-            int newExitTime = getWeightedTimeFromStack(exitStack);
+            result = getShortestExitPath(n,state.getExit(),state);
+            int newExitTime = getWeightedTimeFromStack(result);
             System.out.println("total time allowed" + totalEscapeTimeAllowed);
             System.out.println("new exit time" + newExitTime);
             if (totalEscapeTimeAllowed > newExitTime) {
                 exitPathWithinTime = true;
             }
         }
-        System.out.println("total exit stack size" + exitStack.size());
+        return result;
     }
 
     public ArrayList<Node> getNextMoveOptions(Node curr, Node prev) {
@@ -288,7 +278,7 @@ public class Explorer {
         int exitStackTime = getWeightedTimeFromStack(exit);
         int wanderToExitTime = getWeightedTimeFromNodes(wander.peek(), exit.get(0));
       //  int nextMoveTime = getWeightedTimeFromNodes(src, dest);
-        if(totalEscapeTimeAllowed < (wanderStackTime+ exitStackTime+wanderToExitTime)) {
+        if(totalEscapeTimeAllowed < (wanderStackTime + exitStackTime + wanderToExitTime)) {
             result = true;
         }
         return result;
@@ -452,9 +442,6 @@ public class Explorer {
         long distanceColumn = n1Column-n2Column;
         long distance = Math.abs(distanceRow) + Math.abs(distanceColumn);
         return distance;
-
     }
-
-
 
 }
