@@ -247,7 +247,7 @@ public class Explorer {
     /**
     *calculates best next move
      * @param moveOptions the possible next move options
-     * @param current the current node
+     * @param current the current node 
      * @return returns a node to move to next
     */
     public Node getNextNodeMove(ArrayList<Node> moveOptions, Node current) {
