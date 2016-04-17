@@ -17,18 +17,27 @@ import java.util.Collection;
 
 public class Explorer {
 
-    private Stack<Node> escapeStack = new Stack();
-   // ArrayList<Long> mazeMap = new ArrayList<Long>();
-    ArrayList<Node> nodesVisited = new ArrayList<Node>();
-    ArrayList<Long> nodeStatusVisited = new ArrayList<Long>();
-    Stack<Node> exitStack = new Stack();
-    Stack<Node> tempStack = new Stack();
-    Stack<Node> wanderStack = new Stack();
-    Stack<Node> bestEscapePathStack = new Stack();
-    Stack<Node> moveAroundStack = new Stack();
-    int totalEscapeTimeAllowed = 0;
-    boolean outOfTime = false;
+    private ArrayList<Node> nodesVisited;
+    private ArrayList<Long> nodeStatusVisited;
+    private ArrayList<Long> shortestPathNodesVisited;
+    private Stack<Node> exitStack;
+    private Stack<Node> wanderStack;
+    private Stack<Node> bestEscapePathStack;
+    private Stack<Node> moveAroundStack;
+    private int totalEscapeTimeAllowed;
+    private boolean outOfTime;
 
+    public Explorer() {
+        nodesVisited = new ArrayList<Node>();
+        nodeStatusVisited = new ArrayList<Long>();
+        shortestPathNodesVisited = new ArrayList<Long>();
+        exitStack = new Stack();
+        wanderStack = new Stack();
+        bestEscapePathStack = new Stack();
+        moveAroundStack = new Stack();
+        totalEscapeTimeAllowed = 0;
+        outOfTime = false;
+    }
 
     /**
      * Explore the cavern, trying to find the orb in as few steps as possible.
@@ -97,15 +106,6 @@ public class Explorer {
         }
     }
 
-
-    public int getWightedTimeRemaining(Stack<Node> n) {
-        int result = 0;
-        for(int i = 0; i< n.size()-1; i++) {
-            result =  result + n.get(i).getEdge(n.get(i+1)).length;
-        }
-        return result;
-    }
-
     /**
      * Escape from the cavern before the ceiling collapses, trying to collect as much
      * gold as possible along the way. Your solution must ALWAYS escape before time runs
@@ -133,7 +133,7 @@ public class Explorer {
         //find the path with the most gold
         findBestEscapePath(state);
         //move through this path
-        followExitPath(bestEscapePathStack,state);
+        followStackPath(bestEscapePathStack,state);
     }
 
     public void findBestEscapePath(EscapeState state) {
@@ -189,31 +189,40 @@ public class Explorer {
         moveAroundStack.push(n);
         Stack<Node> tempExitStack = new Stack<Node>();
         while(!outOfTime) {
-            Node previousNode;
-            if (moveAroundStack.size()>=2) {
-                previousNode = moveAroundStack.get(moveAroundStack.size()-2);
-            } else {
-                previousNode = currentNode;
-            }
-            moveOptions = getNextMoveOptions(currentNode, previousNode);
+            moveOptions = getNextMoveOptions(currentNode, getPreviousNode(currentNode));
             exitStack = tempExitStack;
-            if (moveOptions.isEmpty()) {
-                moveAroundStack.pop();
-                wanderStack.push(moveAroundStack.peek());
-                currentNode = moveAroundStack.peek();
-
-            } else {
-                Node nextMove = chooseNextMove(moveOptions);
-                moveAroundStack.push(nextMove);
-                wanderStack.push(nextMove);
-                nodesVisited.add(currentNode);
-                currentNode = nextMove;
-            }
+            currentNode = getNextNodeMove(moveOptions,currentNode);
             tempExitStack = getShortestExitPath(currentNode,state.getExit(),state);;
             outOfTime = checkIfOutOfTime(wanderStack, tempExitStack);
         }
         //last move led to out of time so step back one
         wanderStack.pop();
+    }
+
+    public Node getNextNodeMove(ArrayList<Node> moveOptions, Node current) {
+        if (moveOptions.isEmpty()) {
+            moveAroundStack.pop();
+            wanderStack.push(moveAroundStack.peek());
+            current = moveAroundStack.peek();
+
+        } else {
+            Node nextMove = chooseNextMove(moveOptions);
+            moveAroundStack.push(nextMove);
+            wanderStack.push(nextMove);
+            nodesVisited.add(current);
+            current = nextMove;
+        }
+        return current;
+    }
+
+    public Node getPreviousNode(Node current) {
+        Node previousNode;
+        if (moveAroundStack.size()>=2) {
+            previousNode = moveAroundStack.get(moveAroundStack.size()-2);
+        } else {
+            previousNode = current;
+        }
+        return previousNode;
     }
 
     public Node chooseNextMove(ArrayList<Node> options) {
@@ -252,22 +261,6 @@ public class Explorer {
             }
         }
         return result;
-    }
-
-    public Node getPreviousNode(Node n) {
-        if (tempStack.isEmpty()) {
-            return n;
-        } else {
-            return tempStack.get(tempStack.size()-1);
-        }
-    }
-
-    public Node getPreviousNode2(Node n) {
-        if (tempStack.isEmpty()) {
-            return n;
-        } else {
-            return tempStack.get(tempStack.size()-2);
-        }
     }
 
     public boolean checkIfOutOfTime( Stack<Node> wander, Stack<Node> exit ) {
@@ -318,7 +311,7 @@ public class Explorer {
         return result;
     }
 
-    public void followExitPath(Stack<Node> s, EscapeState state) {
+    public void followStackPath(Stack<Node> s, EscapeState state) {
         for (int i = 1; i < s.size(); i++) {
             state.moveTo(s.get(i));
             if (state.getCurrentNode().getTile().getGold() > 0) {
@@ -328,28 +321,15 @@ public class Explorer {
     }
 
     public Stack<Node> getShortestExitPath(Node c, Node e, EscapeState state) {
-
         Collection<Node> allNodes = state.getVertices();
         Node exitNode = e;
         Tile exitTile = exitNode.getTile();
-        int exitRow = exitTile.getRow();
-        int exitColumn = exitTile.getColumn();
-
-
-        long exitPathDistance = calculateDistance(c,exitNode);
         Node exitPathNode = c;
         Stack<Node> exitStack = new Stack<Node>();
         ArrayList<Long> mazeMap2 = new ArrayList<Long>();
-
-        //This calculates the number of steps to exit
         while (calculateDistance(exitPathNode,exitNode) != 0) {
-
-            //get current location
             Node currentNode = exitPathNode;
             mazeMap2.add(currentNode.getId());
-            //calculate distance to exit using tile coordinates
-            long distanceToExit = calculateDistance(currentNode, exitNode);
-            //get neighbours
             ArrayList<Node> neighbours = new ArrayList();
             for (Node n : allNodes) {
                 long neighbourDistance = calculateDistance(currentNode, n);
@@ -357,17 +337,12 @@ public class Explorer {
                     neighbours.add(n);
                 }
             }
-            //nodes visited
-
-            //nodes not visited
             ArrayList<Node> nodesNotVisited = new ArrayList();
-            //get neighbours not visited
             for (Node n : neighbours) {
                 if (!mazeMap2.contains(n.getId())) {
                     nodesNotVisited.add(n);
                 }
             }
-            //if blank square, choose shortest distance, if no blank square go back
             Node visitNext = null;
             if (!nodesNotVisited.isEmpty()) {
                 for (Node n : nodesNotVisited) {
@@ -383,7 +358,7 @@ public class Explorer {
                 exitPathNode = exitStack.pop();
             }
         }
-    exitStack.push(e);
+        exitStack.push(e);
         return exitStack;
     }
 
