@@ -15,7 +15,7 @@ public class TXTmain {
     public static void main(String[] args) throws IOException {
         List<String> argList = new ArrayList<>(Arrays.asList(args));
         int repeatNumberIndex = argList.indexOf("-n");
-        int numTimesToRun = 100;
+        int numTimesToRun = 1;
         if (repeatNumberIndex >= 0) {
             try {
                 numTimesToRun = Math.max(Integer.parseInt(argList.get(repeatNumberIndex + 1)), 1);

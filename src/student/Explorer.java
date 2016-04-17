@@ -15,11 +15,26 @@ import java.lang.Long;
 
 import java.util.Collection;
 
+/**
+ * @author stevenjenkins SJENKI05
+ *
+ * this class navigates and moves the explorer through the game
+ *
+ * In the exploration phase, the explorer chooses to move to a node not visited before and
+ * which is closer to the exit. Random number chooses when equivalent choices.
+ * If the explorer has been to all node choices relating to a particular node the explorer
+ * moves back until a new not visited node is found
+ *
+ * In the escape phase, the explorer journey is divided into 2 paths. A wander path, where
+ *the explorer wanders around picking up gold, and then when there is just enough time to exit
+ * the explorer follows the exit path. The full escape path (wander + exit) is calculated multiple times
+ * and the path that picks up the most gold is subsequently moved
+ *
+ */
 public class Explorer {
 
     private ArrayList<Node> nodesVisited;
     private ArrayList<Long> nodeStatusVisited;
-    private ArrayList<Long> shortestPathNodesVisited;
     private Stack<Node> exitStack;
     private Stack<Node> wanderStack;
     private Stack<Node> bestEscapePathStack;
@@ -30,7 +45,6 @@ public class Explorer {
     public Explorer() {
         nodesVisited = new ArrayList<Node>();
         nodeStatusVisited = new ArrayList<Long>();
-        shortestPathNodesVisited = new ArrayList<Long>();
         exitStack = new Stack();
         wanderStack = new Stack();
         bestEscapePathStack = new Stack();
@@ -78,6 +92,10 @@ public class Explorer {
         }
     }
 
+    /**
+    *returns a list of the current neighbours
+     * @param state the information available at the current state
+    */
     public ArrayList<NodeStatus> getNeighboursNotBeenTo(ExplorationState state) {
         Collection<NodeStatus> neighbours = state.getNeighbours();
         ArrayList<NodeStatus> options = new ArrayList<NodeStatus>();
@@ -89,6 +107,13 @@ public class Explorer {
         return options;
     }
 
+    /**
+    *calculates the next node to visit
+     * @param options the node's neighbours
+     *@param state the information available at the current state
+     * @param explorePath path the current path
+     * @param current the current node
+    */
     public void visitNextNodeStatus(ArrayList<NodeStatus> options, ExplorationState state,Stack<Long> explorePath,Long current) {
         NodeStatus visitNext = null;
         if (!options.isEmpty()) {
@@ -136,6 +161,10 @@ public class Explorer {
         followStackPath(bestEscapePathStack,state);
     }
 
+    /**
+    *runs multiple escape paths and then keeps one with highest amount of gold
+     * @param state the information available at the current state
+    */
     public void findBestEscapePath(EscapeState state) {
         totalEscapeTimeAllowed = state.getTimeRemaining();
         System.out.println(totalEscapeTimeAllowed);
@@ -148,6 +177,9 @@ public class Explorer {
         }
     }
 
+    /**
+    *compares best and newly generated escape paths
+    */
     public void checkAndReplaceBestEscapeStack() {
         Stack<Node> newEscapePathStack = createNewEscapePathStack();
         //choose the path with the most gold
@@ -163,6 +195,9 @@ public class Explorer {
         }
     }
 
+    /**
+    *create new escape path stack from wander and exit stacks
+    */
     public Stack<Node> createNewEscapePathStack() {
         Stack<Node> result = new Stack<Node>();
         for (int j = 0; j < wanderStack.size(); j++) {
@@ -174,6 +209,9 @@ public class Explorer {
         return result;
     }
 
+    /**
+    *clears the global stacks for each run
+    */
     public void clearAll() {
         wanderStack.removeAllElements();
         exitStack.removeAllElements();
@@ -182,6 +220,11 @@ public class Explorer {
         outOfTime = false;
     }
 
+    /**
+    *finds an escape path that ends within the time limit
+     * @param n current node
+     * @param state the information available at the current state
+    */
     public void findEscapePath(Node n, EscapeState state) {
         Node currentNode = n;
         ArrayList<Node> moveOptions;
@@ -199,6 +242,11 @@ public class Explorer {
         wanderStack.pop();
     }
 
+    /**
+    *calculates best next move
+     * @param moveOptions the possible next move options
+     * @param current the current node
+    */
     public Node getNextNodeMove(ArrayList<Node> moveOptions, Node current) {
         if (moveOptions.isEmpty()) {
             moveAroundStack.pop();
@@ -215,6 +263,10 @@ public class Explorer {
         return current;
     }
 
+    /**
+    *gets the previously visited node
+     * @param current the current node
+    */
     public Node getPreviousNode(Node current) {
         Node previousNode;
         if (moveAroundStack.size()>=2) {
@@ -225,6 +277,10 @@ public class Explorer {
         return previousNode;
     }
 
+    /**
+    *where multiple paths have same priority take one at random
+     * @param options the available move options
+    */
     public Node chooseNextMove(ArrayList<Node> options) {
         Random r = new Random();
         int rand = r.nextInt(options.size());
@@ -249,6 +305,11 @@ public class Explorer {
         return result;
     }
 
+    /**
+    *returns the possible next move options
+     * @param curr the current node
+     * @param prev the previosly visited node
+    */
     public ArrayList<Node> getNextMoveOptions(Node curr, Node prev) {
         ArrayList<Node> result = new ArrayList();
         Set<Node> neighbours = curr.getNeighbours();
@@ -263,6 +324,11 @@ public class Explorer {
         return result;
     }
 
+    /**
+    *adds the wander and exit stack time to determine if path is within time limit
+     * @param wander the stack that holds the wander path
+     * @param exit the stack that holds the exit path
+    */
     public boolean checkIfOutOfTime( Stack<Node> wander, Stack<Node> exit ) {
         boolean result = false;
         int wanderStackTime = getWeightedTimeFromStack(wander);
@@ -275,6 +341,10 @@ public class Explorer {
         return result;
     }
 
+    /**
+    *counts the weighted time for a give stack
+     * @param n any node stack
+    */
     public int getWeightedTimeFromStack(Stack<Node> n) {
         //System.out.println("size of stack" + tempStack.size());
         int result = 0;
@@ -286,6 +356,11 @@ public class Explorer {
         return result;
     }
 
+    /**
+    *counts the weighted time between 2 nodes
+     * @param src the source node
+     * @param dest the desination node
+    */
     public int getWeightedTimeFromNodes(Node src, Node dest) {
         int result = 0;
         Long srcLong = src.getId();
@@ -299,6 +374,10 @@ public class Explorer {
 
     }
 
+    /**
+    *returns the amount of gold from a given stack
+     * @param s any given stack
+    */
     public int getGoldFromStack(Stack<Node> s) {
         int result = 0;
         ArrayList<Long> visited = new ArrayList<Long>();
@@ -311,6 +390,11 @@ public class Explorer {
         return result;
     }
 
+    /**
+    *executes state move for a given stack
+     * @param s any given stack
+     * @param state current game state
+    */
     public void followStackPath(Stack<Node> s, EscapeState state) {
         for (int i = 1; i < s.size(); i++) {
             state.moveTo(s.get(i));
@@ -320,6 +404,12 @@ public class Explorer {
         }
     }
 
+    /**
+    *calculates the shortest path between 2 nodes
+     * @param c the current node
+     * @param e the destination node
+     * @param state the game state
+    */
     public Stack<Node> getShortestExitPath(Node c, Node e, EscapeState state) {
         Collection<Node> allNodes = state.getVertices();
         Node exitNode = e;
@@ -362,6 +452,11 @@ public class Explorer {
         return exitStack;
     }
 
+    /**
+    *calculates the distance between 2 nodes using coordinates
+     * @param n1 source node
+     * @param n2 destination node
+    */
     public long calculateDistance(Node n1, Node n2) {
         Tile n1Tile = n1.getTile();
         Tile n2Tile = n2.getTile();
