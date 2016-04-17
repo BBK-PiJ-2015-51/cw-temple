@@ -23,6 +23,7 @@ public class TXTmain {
                 System.err.println("Couldn't parse argument for -n option");
             }
         }
+
         Optional<Long> seed = Utilities.parseSeedArgs(args);
 
         int totalScore = 0;

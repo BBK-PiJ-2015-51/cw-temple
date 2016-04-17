@@ -24,7 +24,7 @@ public class Explorer {
     Stack<Node> wanderStack = new Stack();
     Stack<Node> bestEscapePath = new Stack();
     int totalEscapeTimeAllowed = 0;
-    boolean OutOfTime;
+    boolean OutOfTime = false;
 
 
     /**
@@ -139,34 +139,35 @@ public class Explorer {
      * @param state the information available at the current state
      */
     public void escape(EscapeState state) {
-        System.out.println("This is total amount left" + state.getTimeRemaining());
+        //System.out.println("This is total amount left" + state.getTimeRemaining());
         totalEscapeTimeAllowed = state.getTimeRemaining();
+System.out.println("totalEscapeTimeAllowed" + totalEscapeTimeAllowed);
         Node currentNode = state.getCurrentNode();
-        for (int i = 0; i < 50; i++) {
-            System.out.println("enterloop" + i);
+        for (int i = 0; i < 1; i++) {
             findBestExitPath(currentNode,state);
             Stack<Node> newEscapePath = new Stack();
-            newEscapePath = wanderStack;
-            System.out.println("wanderStacksizeIsOk?" + wanderStack.size());
-            for (int j = 0; i < exitStack.size(); i++) {
-                newEscapePath.push(exitStack.get(i));
+            for (int j = 0; j < tempStack.size(); j++) {
+                newEscapePath.push(tempStack.get(j));
+            }
+            for (int j = 1; j < exitStack.size(); j++) {
+                newEscapePath.push(exitStack.get(j));
             }
             if (bestEscapePath.isEmpty()) {
                 bestEscapePath = newEscapePath;
             } else {
                 int bestEscapePathGold = getGoldFromStack(bestEscapePath);
-                int newEscapePathGold = getGoldFromStack(bestEscapePath);
-                System.out.println("best" + bestEscapePathGold);
-                System.out.println("new" + newEscapePathGold);
+                int newEscapePathGold = getGoldFromStack(newEscapePath);
                 if (bestEscapePathGold < newEscapePathGold) {
                     bestEscapePath = newEscapePath;
                 }
             }
-            tempStack.empty();
-
+            tempStack.removeAllElements();
+            exitStack.removeAllElements();
+            mazeMap.clear();
+            OutOfTime = false;
         }
-        System.out.println("following path" + getGoldFromStack(bestEscapePath));
         followExitPath(bestEscapePath,state);
+        System.out.println("time left" + state.getTimeRemaining());
     }
 
     public ArrayList<Node> getNextMoveOptions(Node curr, Node prev) {
@@ -200,45 +201,49 @@ public class Explorer {
     }
 
     public void findBestExitPath(Node n, EscapeState state) {
-System.out.println("this node" + n.getId());
-        //calculate exit time
+        Node cameFrom  = n;
+        if(!tempStack.isEmpty()) {
+            cameFrom = getPreviousNode(n);//should just be stack
+        }
         exitStack = getShortestPath(n,state.getExit(),state);
         int exitStackTime = getWeightedTimeFromStack(exitStack);
-
         //calculate current time
         int tempStackTime = getWeightedTimeFromStack(tempStack);
+        int nextMoveTime = getWeightedTimeFromNodes(getPreviousNode(n), n);
+        int tempToExitTime = 0;
 
+        if (!OutOfTime && !tempStack.isEmpty()) {
+            tempToExitTime = getWeightedTimeFromNodes(tempStack.peek(), exitStack.get(0));
+        }
         //if not enough time
-        if (tempStackTime + exitStackTime + getWeightedTimeFromNodes(getPreviousNode(n), n) >= totalEscapeTimeAllowed) {
-            System.out.println("out of time");
-            wanderStack = tempStack;
+        if ( tempStackTime + exitStackTime + nextMoveTime  > totalEscapeTimeAllowed) {
+
+            exitStack = getShortestPath(cameFrom,state.getExit(),state);
             OutOfTime = true;
         } else {
-            System.out.println("pushing on stack"+tempStack.push(n).getId());
+            tempStack.push(n).getId();
             mazeMap.add(n.getId());
             //route options
-
         }
         ArrayList<Node> routeOptions = getNextMoveOptions(n, getPreviousNode(n));
-        System.out.println("no of route options" +routeOptions.size());
-
+       // System.out.println("no of route options" +routeOptions.size());
         //if run out of time move back
         if (routeOptions.isEmpty() || OutOfTime) {
-            System.out.println("moving back");
+            //System.out.println("moving back");
             if(routeOptions.isEmpty()) {
-                System.out.println("previou node" + getPreviousNode2(n).getId());
+               // System.out.println("previou node" + getPreviousNode2(n).getId());
                 tempStack.push(getPreviousNode2(n));
+                exitStack = getShortestPath(cameFrom,state.getExit(),state);
+                OutOfTime = checkIfOutOfTime(tempStack,exitStack);
             }
             return;
         }
-
         routeOptions = getNextMoveOptions(n, getPreviousNode(n));
         if (!routeOptions.isEmpty()  && !OutOfTime){
             Random r = new Random();
             int rand = r.nextInt(routeOptions.size());
             findBestExitPath(routeOptions.get(rand),state);
         }
-
         routeOptions = getNextMoveOptions(n, getPreviousNode(n));
         if (!routeOptions.isEmpty() && !OutOfTime){
             Random r = new Random();
@@ -246,32 +251,37 @@ System.out.println("this node" + n.getId());
             findBestExitPath(routeOptions.get(rand),state);
         }
         routeOptions = getNextMoveOptions(n, getPreviousNode(n));
-        if (!routeOptions.isEmpty()  && !OutOfTime){
+        if (!routeOptions.isEmpty()  && !OutOfTime) {
             Random r = new Random();
             int rand = r.nextInt(routeOptions.size());
-            findBestExitPath(routeOptions.get(rand),state);
+            findBestExitPath(routeOptions.get(rand), state);
         }
-        System.out.println("returning from method");
         if(!OutOfTime) {
-            tempStack.push(getPreviousNode2(n));
+            tempStack.push(cameFrom);
+            exitStack = getShortestPath(cameFrom,state.getExit(),state);
+            OutOfTime = checkIfOutOfTime(tempStack,exitStack);
         }
-        System.out.println(OutOfTime);
     }
 
-    public boolean enoughTimeToMove(EscapeState state, Stack<Node> s) {
+    public boolean checkIfOutOfTime( Stack<Node> temp, Stack<Node> exit ) {
         boolean result = false;
-        int currentStackTime = getWeightedTimeFromStack(s);
+        int tempStackTime = getWeightedTimeFromStack(temp);
+        int exitStackTime = getWeightedTimeFromStack(exit);
+        int tempToExitTime = getWeightedTimeFromNodes(tempStack.peek(), exitStack.get(0));
       //  int nextMoveTime = getWeightedTimeFromNodes(src, dest);
-        if(totalEscapeTimeAllowed > (currentStackTime )) {
+        if(totalEscapeTimeAllowed < (tempStackTime+ exitStackTime+tempToExitTime)) {
             result = true;
         }
         return result;
     }
 
     public int getWeightedTimeFromStack(Stack<Node> n) {
+        //System.out.println("size of stack" + tempStack.size());
         int result = 0;
-        for(int i = 0; i< n.size()-1; i++) {
-            result =  result + n.get(i).getEdge(n.get(i+1)).length;
+        if (n.size() > 1) {
+            for(int i = 0; i< n.size()-1; i++) {
+                result =  result + n.get(i).getEdge(n.get(i+1)).length();
+            }
         }
         return result;
     }
@@ -279,7 +289,7 @@ System.out.println("this node" + n.getId());
     public int getWeightedTimeFromNodes(Node src, Node dest) {
         int result = 0;
         Long srcLong = src.getId();
-        Long destLong = src.getId();
+        Long destLong = dest.getId();
         if(srcLong.compareTo(destLong) == 0) {
             return result;
         } else {
@@ -291,21 +301,23 @@ System.out.println("this node" + n.getId());
 
     public int getGoldFromStack(Stack<Node> s) {
         int result = 0;
+        ArrayList<Long> visited = new ArrayList<Long>();
         for(Node n: s) {
-            result = result + n.getTile().getGold();
+            if (!visited.contains(n.getId())) {
+                result = result + n.getTile().getGold();
+            }
+            visited.add(n.getId());
         }
         return result;
     }
 
-    public void followExitPath(Stack<Node> exitStack, EscapeState state) {
-        System.out.println("proceeding to exit");
-        for (int i = 1; i < exitStack.size(); i++) {
-            state.moveTo(exitStack.get(i));
+    public void followExitPath(Stack<Node> s, EscapeState state) {
+        for (int i = 1; i < s.size(); i++) {
+            state.moveTo(s.get(i));
             if (state.getCurrentNode().getTile().getGold() > 0) {
                 state.pickUpGold();
             }
         }
-
     }
 
     public Node visitNextNode(EscapeState state) {
@@ -362,14 +374,14 @@ System.out.println("this node" + n.getId());
         long exitPathDistance = calculateDistance(c,exitNode);
         Node exitPathNode = c;
         Stack<Node> exitStack = new Stack<Node>();
-        ArrayList<Long> mazeMap = new ArrayList<Long>();
+        ArrayList<Long> mazeMap2 = new ArrayList<Long>();
 
         //This calculates the number of steps to exit
         while (calculateDistance(exitPathNode,exitNode) != 0) {
 
             //get current location
             Node currentNode = exitPathNode;
-            mazeMap.add(currentNode.getId());
+            mazeMap2.add(currentNode.getId());
             //calculate distance to exit using tile coordinates
             long distanceToExit = calculateDistance(currentNode, exitNode);
             //get neighbours
@@ -386,7 +398,7 @@ System.out.println("this node" + n.getId());
             ArrayList<Node> nodesNotVisited = new ArrayList();
             //get neighbours not visited
             for (Node n : neighbours) {
-                if (!mazeMap.contains(n.getId())) {
+                if (!mazeMap2.contains(n.getId())) {
                     nodesNotVisited.add(n);
                 }
             }
