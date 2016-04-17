@@ -143,6 +143,7 @@ public class Explorer {
         //find the path with the most gold
         findBestEscapePath(state);
         //move through this path
+        System.out.println("best escape path" + bestEscapePathStack.size());
         followExitPath(bestEscapePathStack,state);
     }
 
@@ -175,7 +176,7 @@ public class Explorer {
         for (int j = 0; j < wanderStack.size(); j++) {
             newEscapePathStack.push(wanderStack.get(j));
         }
-        for (int j = 1; j < exitStack.size(); j++) {
+        for (int j = 0; j < exitStack.size(); j++) {
             newEscapePathStack.push(exitStack.get(j));
         }
     }
@@ -190,16 +191,25 @@ public class Explorer {
 
 
     public void findEscapePath(Node n, EscapeState state) {
-       totalEscapeTimeAllowed = state.getTimeRemaining();
+
+
+    }
+
+    public void setExitStack(Node n, EscapeState state) {
+        totalEscapeTimeAllowed = state.getTimeRemaining();
         boolean exitPathWithinTime = false;
+        //always return an exit path that is within the time limit
         while(!exitPathWithinTime) {
-            int newExitTime = getWeightedTimeFromStack(getShortestExitPath(n,state.getExit(),state));
+            exitStack = getShortestExitPath(n,state.getExit(),state);
+            int newExitTime = getWeightedTimeFromStack(exitStack);
+            System.out.println("total time allowed" + totalEscapeTimeAllowed);
+            System.out.println("new exit time" + newExitTime);
             if (totalEscapeTimeAllowed > newExitTime) {
                 exitPathWithinTime = true;
             }
         }
+        System.out.println("total exit stack size" + exitStack.size());
     }
-
 
     public ArrayList<Node> getNextMoveOptions(Node curr, Node prev) {
         ArrayList<Node> result = new ArrayList();
