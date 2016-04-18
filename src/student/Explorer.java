@@ -39,7 +39,7 @@ public class Explorer {
     private Stack<Node> wanderStack;
     private Stack<Node> bestEscapePathStack;
     private Stack<Node> moveAroundStack;
-    private int totalEscapeTimeAllowed;
+    private int totalEscapeTimeAllowed; 
     private boolean outOfTime;
 
     public Explorer() {
